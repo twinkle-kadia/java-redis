@@ -18,16 +18,21 @@ package com.google.cloud.redis.v1.it;
 
 import static org.junit.Assert.assertEquals;
 
+import com.google.api.core.ApiFuture;
 import com.google.cloud.ServiceOptions;
+import com.google.cloud.Timestamp;
 import com.google.cloud.redis.v1.CloudRedisClient;
 import com.google.cloud.redis.v1.CloudRedisSettings;
 import com.google.cloud.redis.v1.Instance;
 import com.google.cloud.redis.v1.InstanceName;
+import com.google.cloud.redis.v1.ListInstancesRequest;
 import com.google.cloud.redis.v1.LocationName;
 import com.google.cloud.redis.v1.UpdateInstanceRequest;
 import com.google.common.collect.Lists;
 import com.google.protobuf.FieldMask;
+import java.io.IOException;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -67,7 +72,7 @@ public class ITSystemTest {
                 .build());
     CloudRedisSettings cloudRedisSettings = cloudRedisSettingsBuilder.build();
     client = CloudRedisClient.create(cloudRedisSettings);
-    /* Creates a Redis instance based on the specified tier and memory size. */
+    cleanUpInstances();
     Instance instance =
         Instance.newBuilder()
             .setTier(TIER)
@@ -76,6 +81,26 @@ public class ITSystemTest {
             .build();
     client.createInstanceAsync(PARENT, INSTANCE, instance).get();
     LOG.info("redis instance created successfully.");
+  }
+
+  static void cleanUpInstances() throws IOException, ExecutionException, InterruptedException {
+    // clean up resources older than 1 hour
+    Calendar calendar = Calendar.getInstance();
+    calendar.add(Calendar.HOUR_OF_DAY, -1);
+    Timestamp cutoff = Timestamp.of(calendar.getTime());
+    ListInstancesRequest request =
+        ListInstancesRequest.newBuilder().setParent(PARENT.toString()).build();
+    ApiFuture<CloudRedisClient.ListInstancesPagedResponse> future =
+        client.listInstancesPagedCallable().futureCall(request);
+    for (Instance element : future.get().iterateAll()) {
+      if (element.getName().contains("test-")) {
+        java.sql.Timestamp ts = new java.sql.Timestamp(element.getCreateTime().getSeconds());
+        Timestamp createdAt = Timestamp.of(ts);
+        if (createdAt.compareTo(cutoff) < 0) {
+          client.deleteInstanceAsync(element.getName()).get();
+        }
+      }
+    }
   }
 
   @AfterClass
