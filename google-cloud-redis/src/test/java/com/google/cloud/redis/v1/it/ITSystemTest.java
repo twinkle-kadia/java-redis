@@ -16,8 +16,6 @@
 
 package com.google.cloud.redis.v1.it;
 
-import static org.junit.Assert.assertEquals;
-
 import com.google.api.core.ApiFuture;
 import com.google.cloud.ServiceOptions;
 import com.google.cloud.Timestamp;
@@ -30,6 +28,11 @@ import com.google.cloud.redis.v1.LocationName;
 import com.google.cloud.redis.v1.UpdateInstanceRequest;
 import com.google.common.collect.Lists;
 import com.google.protobuf.FieldMask;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.threeten.bp.Duration;
+
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -37,10 +40,8 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Logger;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.threeten.bp.Duration;
+
+import static org.junit.Assert.assertEquals;
 
 public class ITSystemTest {
 
@@ -73,6 +74,7 @@ public class ITSystemTest {
     CloudRedisSettings cloudRedisSettings = cloudRedisSettingsBuilder.build();
     client = CloudRedisClient.create(cloudRedisSettings);
     cleanUpInstances();
+    /* Creates a Redis instance based on the specified tier and memory size. */
     Instance instance =
         Instance.newBuilder()
             .setTier(TIER)
