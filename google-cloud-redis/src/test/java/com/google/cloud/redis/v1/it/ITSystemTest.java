@@ -79,9 +79,9 @@ public class ITSystemTest {
   }
 
   @AfterClass
-  public static void tearDown() {
+  public static void tearDown() throws ExecutionException, InterruptedException {
     /* Deletes a specific Redis instance. Instance stops serving and data is deleted. */
-    client.deleteInstanceAsync(INSTANCE_NAME);
+    client.deleteInstanceAsync(INSTANCE_NAME).get();
     LOG.info("redis instance deleted successfully.");
     client.close();
   }
